@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>User Dashboard Page</title>
+	<link rel="icon" type="image/x-icon" href="img/favicon.ico" />
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+	<link rel="stylesheet" href="./css/style.css">
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap"
+		rel="stylesheet" />
+</head>
+
+<body>
+	<nav class="navbar navbar-expand-lg shadow-sm w-100 mb-5">
+		<div class="container-fluid px-4">
+			<div class="d-flex justify-content-center">
+				<img src="img/Emblem-of-Thammasat-University.svg" height="35" width="35"
+					alt="Thammasat University Logo" />
+				<h5 class="ms-2 fw-semibold my-auto">มหาวิทยาลัยธรรมศาสตร์</h5>
+			</div>
+			<ul class="navbar-nav">
+				<li class="nav-item d-flex justify-content-end">
+					<img src="./img/user-icon.svg" alt="User Icon" width="30" height="30" />
+					<a id="displayname" class="nav-link my-auto"></a>
+				</li>
+				<li class="nav-item d-flex justify-content-center">
+					<div class="bar"></div>
+				</li>
+				<li class="nav-item">
+					<button class="nav-link" onclick="logout()">ลงชื่อออก</button>
+				</li>
+			</ul>
+		</div>
+	</nav>
+	<div class="container">
+		<div class="d-flex col justify-content-between mb-4">
+			<h3 class="fw-bold">ระบบคำร้อง</h3>
+			<button class="btn btn-outline-secondary" id="addBtn">
+				สร้างคำร้อง
+			</button>
+		</div>
+		<div id="data" class="col"></div>
+	</div>
+	<div class="modal fade bd-example-modal-lg" id="resultModal" tabindex="-1" aria-labelledby="exampleModalLabel"
+		aria-hidden="true" data-bs-backdrop="static">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title" id="exampleModalLongTitle">
+						คำร้องนักศึกษา
+					</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<form id="requestForm">
+					<div class="modal-body row gap-2">
+						<div class="form-group">
+							<label for="subject" class="form-label">เรื่อง</label>
+							<input type="text" class="form-control" id="subject" required />
+						</div>
+						<div class="form-group">
+							<label for="recipient" class="form-label">เรียน</label>
+							<input type="text" class="form-control" id="recipient" required />
+						</div>
+
+						<div class="modal-header"></div>
+						<div class="modal-header">
+							<h5>ข้อมูลนักศึกษา</h5>
+						</div>
+
+						<div class="row px-0 mx-0">
+							<div class="form-group col-md-6">
+								<label for="firstName" class="form-label">ชื่อ</label>
+								<input type="text" class="form-control" id="firstName" required />
+							</div>
+							<div class="form-group col-md-6">
+								<label for="lastName" class="form-label">สกุล</label>
+								<input type="text" class="form-control" id="lastName" required />
+							</div>
+						</div>
+						<div class="row px-0 mx-0">
+							<div class="form-group col-md-6">
+								<label for="studentId" class="form-label">เลขทะเบียน</label>
+								<input type="text" class="form-control" id="studentId" required />
+							</div>
+							<div class="form-group col-md-6">
+								<label for="major" class="form-label">สาขาวิชา</label>
+								<input type="text" class="form-control" id="major" required />
+							</div>
+						</div>
+
+						<div class="modal-header"></div>
+						<div class="modal-header">
+							<h5>ที่อยู่ที่ติดต่อได้</h5>
+						</div>
+
+						<div class="form-group">
+							<label for="addressNumber" class="form-label">เลขที่</label>
+							<input type="text" class="form-control" id="addressNumber" required />
+						</div>
+
+						<div class="row px-0 mx-0">
+							<div class="form-group col-md-6">
+								<label for="subDistrict" class="form-label">แขวง/ตำบล</label>
+								<input type="text" class="form-control" id="subDistrict" required />
+							</div>
+							<div class="form-group col-md-6">
+								<label for="district" class="form-label">เขต/อำเภอ</label>
+								<input type="text" class="form-control" id="district" required />
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="province" class="form-label">จังหวัด</label>
+							<input type="text" class="form-control" id="province" required />
+						</div>
+
+						<div class="row px-0 mx-0">
+							<div class="form-group col-md-6">
+								<label for="studentPhone" class="form-label">โทรศัพท์ติดต่อนักศึกษา</label>
+								<input type="text" class="form-control" id="studentPhone" required />
+							</div>
+							<div class="form-group col-md-6">
+								<label for="parentPhone" class="form-label">โทรศัพท์ติดต่อผู้ปกครอง</label>
+								<input type="text" class="form-control" id="parentPhone" required />
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="advisor" class="form-label">อาจารย์ที่ปรึกษา</label>
+							<input type="text" class="form-control" id="advisor" required />
+						</div>
+
+						<div class="form-group">
+							<label for="requestType" class="form-label">ประสงค์ที่จะยื่นคำร้องเรื่อง</label>
+							<select class="form-select" onchange="requestTypeChange(value)" id="requestType" required>
+								<option value="" selected disabled>
+									กรุณาเลือกประเภทคำร้อง
+								</option>
+								<option value="lateRegistration">
+									จดทะเบียนล่าช้า/เพิ่มล่าช้า
+								</option>
+								<option value="dropCourse">
+									ขอถอนวิชา/ถอนรายวิชา (Drop W)
+								</option>
+								<option value="crossCurriculum">
+									ขอจดทะเบียนศึกษารายวิชาข้ามหลักสูตร
+								</option>
+								<option value="resign">ขอลาออก</option>
+							</select>
+						</div>
+
+						<div id="moreForm" class="row gap-2 px-0 mx-0"></div>
+					</div>
+
+					<div id="commentBox"></div>
+					<div class="modal-footer" id="formButton"></div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
