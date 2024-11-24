@@ -21,6 +21,23 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 
+app.get("/dashboard", (req, res) => {
+	if (req.session.loggedIn) {
+		res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+	} else {
+		res.redirect("/");
+	}
+});
+
+app.get("/logout", (req, res) => {
+	req.session.destroy((err) => {
+		if (err) {
+			return res.status(500).json({ message: "Error logging out" });
+		}
+		res.redirect("/");
+	});
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`);
