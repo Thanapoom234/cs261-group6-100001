@@ -164,6 +164,7 @@ async function showModal(id, type) {
 		document.getElementById("parentPhone").value = "";
 		document.getElementById("advisor").value = "";
 		document.getElementById("requestType").value = "";
+		document.getElementById("commentBox").innerHTML = "";
 		document.getElementById("document-info").innerHTML = "";
 		requestTypeChange("");
 		disabledInput(false, "");
@@ -306,6 +307,43 @@ function submitForm(event, status, id, type) {
 
 	requestData.updatedAt = new Date().toISOString();
 
+	switch (type) {
+		case "student":
+			requestData.waitFor = "กานต์ วัฒนานนท์";
+			break;
+		case "staff":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.waitFor = "สิริกันยา นิลพานิช";
+			break;
+		case "advisor":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.waitFor = "ทรงศักดิ์ รองวิริยะพานิช";
+			break;
+		case "lecturer":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.commentByLecturer =
+				document.getElementById("commentByLecturer").value;
+			requestData.waitFor = "สุเพชร จิรขจรกุล";
+			break;
+		case "dean":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.commentByLecturer =
+				document.getElementById("commentByLecturer").value;
+			requestData.commentByDean =
+				document.getElementById("commentByDean").value;
+			break;
+	}
+
 	if (Object.values(requestData).some((value) => value === "")) {
 		alert("กรุณากรอกข้อมูลให้ครบถ้วน");
 		checkEmptyInputs();
@@ -395,6 +433,10 @@ function cancelRequest(event, id) {
 				requestData.status = "แบบร่าง";
 				requestData.updatedAt = new Date().toISOString();
 				requestData.waitFor = "";
+				requestData.commentByStaff = "";
+				requestData.commentByAdvisor = "";
+				requestData.commentByLecturer = "";
+				requestData.commentByDean = "";
 
 				const formData = new FormData();
 				formData.append("request", JSON.stringify(requestData));
@@ -478,6 +520,7 @@ function updateRequest(id) {
 			}
 
 			disabledInput(false, data.requestType);
+			document.getElementById("commentBox").innerHTML = ""; // ล้างช่องคอมเมนต์
 		})
 		.catch((error) => {
 			console.error("Error:", error);
@@ -560,6 +603,95 @@ function detailBtn(id, type) {
 
 			disabledInput(true, data.requestType); // ปิดการแก้ไขฟอร์ม
 
+			let status,
+				comment = "";
+
+			const commentByDean = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นคณบดี <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByDean" ${
+									type !== "dean" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByLecturer = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นอาจารย์ผู้สอน <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByLecturer" ${
+									type !== "lecturer" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByAdvisor = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นอาจารย์ที่ปรึกษา <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByAdvisor" ${
+									type !== "advisor" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByStaff = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นเจ้าหน้าที่โครงการฯ <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByStaff" ${
+									type !== "staff" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			if (type !== "student") {
+				document.getElementById("fileInput").classList.add("d-none");
+
+				if (data.commentByLecturer) {
+					status = "อนุมัติ";
+					comment =
+						commentByStaff +
+						commentByAdvisor +
+						commentByLecturer +
+						commentByDean;
+				} else if (data.commentByAdvisor) {
+					status = "รออนุมัติจากคณบดี";
+					comment = commentByStaff + commentByAdvisor + commentByLecturer;
+				} else if (data.commentByStaff) {
+					status = "รออนุมัติจากอาจารย์ผู้สอน";
+					comment = commentByStaff + commentByAdvisor;
+				} else {
+					status = "รออนุมัติจากอาจารย์ที่ปรึกษา";
+					comment = commentByStaff;
+				}
+			} else {
+				if (data.commentByDean) {
+					comment =
+						commentByStaff +
+						commentByAdvisor +
+						commentByLecturer +
+						commentByDean;
+				} else if (data.commentByLecturer) {
+					comment = commentByStaff + commentByAdvisor + commentByLecturer;
+				} else if (data.commentByAdvisor) {
+					comment = commentByStaff + commentByAdvisor;
+				} else if (data.commentByStaff) {
+					comment = commentByStaff;
+				}
+			}
+
+			document.getElementById("commentBox").innerHTML = comment;
+
 			//กรณีที่เป็นนักศึกษา ให้แสดงคอมเมนต์ของอาจารย์ด้วย
 			if (type === "student") {
 				document.getElementById("formButton").innerHTML = "";
@@ -568,6 +700,21 @@ function detailBtn(id, type) {
 				<button onclick="submitForm(event, 'ไม่อนุมัติ', '${id}', '${type}')" class="btn btn-danger">ไม่อนุมัติ</button>
 				<button onclick="submitForm(event, '${status}', '${id}', '${type}')" class="btn btn-success">อนุมัติ</button>
 				`;
+			}
+
+			if (data.commentByDean) {
+				document.getElementById("commentByDean").value = data.commentByDean;
+			}
+			if (data.commentByLecturer) {
+				document.getElementById("commentByLecturer").value =
+					data.commentByLecturer;
+			}
+			if (data.commentByAdvisor) {
+				document.getElementById("commentByAdvisor").value =
+					data.commentByAdvisor;
+			}
+			if (data.commentByStaff) {
+				document.getElementById("commentByStaff").value = data.commentByStaff;
 			}
 		})
 		.catch((error) => {
