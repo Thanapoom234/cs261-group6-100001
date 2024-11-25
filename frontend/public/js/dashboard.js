@@ -165,6 +165,7 @@ async function showModal(id, type) {
 		document.getElementById("advisor").value = "";
 		document.getElementById("requestType").value = "";
 		document.getElementById("commentBox").innerHTML = "";
+		document.getElementById("document").value = "";
 		document.getElementById("document-info").innerHTML = "";
 		requestTypeChange("");
 		disabledInput(false, "");
@@ -354,8 +355,19 @@ function submitForm(event, status, id, type) {
 		requestData.waitFor = "";
 	}
 
+	const file = document.getElementById("document").files[0];
+	if (file && !file.type.includes("pdf")) {
+		alert("กรุณาแนบไฟล์ PDF เท่านั้น");
+		return;
+	}
+
 	const formData = new FormData();
 	formData.append("request", JSON.stringify(requestData));
+	if (file) {
+		formData.append("file", file);
+	} else {
+		formData.append("file", null);
+	}
 
 	// ส่งคำร้องไปที่ backend
 	fetch(
@@ -746,6 +758,7 @@ function disabledInput(value, type) {
 	document.getElementById("parentPhone").disabled = value;
 	document.getElementById("advisor").disabled = value;
 	document.getElementById("requestType").disabled = value;
+	document.getElementById("document").disabled = value;
 
 	if (type === "") return;
 
