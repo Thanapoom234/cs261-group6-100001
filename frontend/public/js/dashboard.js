@@ -611,3 +611,55 @@ function disabledInput(value, type) {
 		document.getElementById("section").disabled = value;
 	}
 }
+
+function validateStudentPhoneNumber() {
+	const phoneRegex = /^\d{10}$/;
+	const studentPhone = document.getElementById("studentPhone");
+
+	if (!phoneRegex.test(studentPhone.value)) {
+		studentPhone.classList.add("is-invalid");
+		return false;
+	}
+
+	studentPhone.classList.remove("is-invalid");
+	return true;
+}
+
+function validateParentPhoneNumber() {
+	const phoneRegex = /^\d{10}$/;
+	const parentPhone = document.getElementById("parentPhone");
+
+	if (!phoneRegex.test(parentPhone.value)) {
+		parentPhone.classList.add("is-invalid");
+		return false;
+	}
+
+	parentPhone.classList.remove("is-invalid");
+	return true;
+}
+
+function checkEmptyInputs() {
+	const inputs = document.querySelectorAll("input, textarea");
+	let isValid = true;
+	validateStudentPhoneNumber();
+	validateParentPhoneNumber();
+
+	inputs.forEach((input) => {
+		if (input.value.trim() === "") {
+			input.classList.add("is-invalid");
+			isValid = false;
+		} else {
+			input.classList.remove("is-invalid");
+		}
+	});
+
+	return isValid;
+}
+
+function checkValue(element) {
+	if (element.value.trim() === "") {
+		element.classList.add("is-invalid");
+	} else {
+		element.classList.remove("is-invalid");
+	}
+}
