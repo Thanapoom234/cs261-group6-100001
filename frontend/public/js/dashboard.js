@@ -312,6 +312,10 @@ function submitForm(event, status, id, type) {
 		return;
 	}
 
+	if (status === "ไม่อนุมัติ") {
+		requestData.waitFor = "";
+	}
+
 	const formData = new FormData();
 	formData.append("request", JSON.stringify(requestData));
 
@@ -390,6 +394,7 @@ function cancelRequest(event, id) {
 
 				requestData.status = "แบบร่าง";
 				requestData.updatedAt = new Date().toISOString();
+				requestData.waitFor = "";
 
 				const formData = new FormData();
 				formData.append("request", JSON.stringify(requestData));
