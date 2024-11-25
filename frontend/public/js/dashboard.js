@@ -94,12 +94,12 @@ function showData(data, type) {
 			// การแสดงรายการคำร้อง
 			return `
                         <div class="card shadow-sm p-4 mb-3 position-relative">
-                            <div class="d-flex justify-content-between flex-column gap-4">
+                            <div class="d-flex justify-content-between flex-xl-row flex-column gap-4">
                                 <div class="d-flex gap-2">
                                     <div class="rounded h-1 bg-${color}" style="width: 6px;"></div>
                                     <h4 class="mt-1">${item.subject}</h4>
                                 </div>
-                                <h5 class="my-auto text-${color} position-absolute start-50 top-50 translate-middle d-none">
+                                <h5 class="my-auto text-${color} position-absolute start-50 top-50 translate-middle d-xl-block d-none">
                                     ${item.status}
                                 </h5>
                                 <div class="d-flex gap-2 justify-content-end">
@@ -186,25 +186,25 @@ function requestTypeChange(value) {
 	} else if (value !== "resign") {
 		form.innerHTML = `
             <div class="row px-0 mx-0">
-					<div class="form-group">
+					<div class="form-group col-md-6">
                     <label for="semester">ภาคการศึกษาที่</label>
                     <input type="text" class="form-control" id="semester" onblur="checkValue(this)" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group col-md-6">
                     <label for="academicYear">ปีการศึกษา</label>
                     <input type="text" class="form-control" id="academicYear" onblur="checkValue(this)" required>
                 </div>
             </div>
             <div class="row px-0 mx-0">
-                <div class="form-group">
+                <div class="form-group col-md-4">
                     <label for="courseCode">รหัสวิชา</label>
                     <input type="text" class="form-control" id="courseCode" onblur="checkValue(this)" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group col-md-4">
                     <label for="courseName">ชื่อวิชา</label>
                     <input type="text" class="form-control" id="courseName" onblur="checkValue(this)" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group col-md-4">
                     <label for="section">Section</label>
                     <input type="text" class="form-control" id="section" onblur="checkValue(this)" required>
                 </div>
@@ -213,11 +213,11 @@ function requestTypeChange(value) {
 	} else {
 		form.innerHTML = `
             <div class="row px-0 mx-0">
-                <div class="form-group">
+                <div class="form-group col-md-6">
                     <label for="startSemester">ตั้งแต่ภาคการศึกษาที่</label>
                     <input type="text" class="form-control" id="startSemester" onblur="checkValue(this)" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group col-md-6">
                     <label for="startAcademicYear">ปีการศึกษา</label>
                     <input type="text" class="form-control" id="startAcademicYear" onblur="checkValue(this)" required>
                 </div>
