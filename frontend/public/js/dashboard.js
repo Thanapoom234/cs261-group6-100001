@@ -3,8 +3,19 @@ window.addEventListener("load", async function () {
 	document.getElementById("displayname").innerText = user.displayname_th;
 
 	fetchData(user.type);
-	if (user.type === "professor") {
-		document.getElementById("addBtn").style.display = "none";
+	if (user.type === "student") {
+		document.getElementById(
+			"addBtn"
+		).innerHTML = `<button onclick="showModal('create', 'student')" class="btn btn-outline-secondary d-flex gap-2" id="addBtn">
+						<img
+							src="./img/plus-circle.svg"
+							alt="Icon"
+							width="20"
+							height="20"
+							class="my-auto"
+						/>
+				<p class="my-1">สร้างคำร้อง</p>
+			</button>`;
 	}
 });
 
@@ -19,18 +30,39 @@ async function fetchUser() {
 	}
 }
 
-function fetchData(type) {
-	fetch("http://localhost:8080/api/requests")
+async function fetchData(type) {
+	const user = await fetchUser();
+
+	fetch(
+		`http://localhost:8080/api/requests/fetch${
+			type == "student" ? "/student" : ""
+		}`,
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ name: user.displayname_th }),
+		}
+	)
 		.then((response) => {
 			if (response.ok) {
 				return response.json();
 			} else {
-				throw new Error("Failed to fetch requests");
+				throw new Error("Failed to fetch requests by waitFor");
 			}
 		})
 		.then((data) => {
-			if (!data || data.length === 0) {
-				document.getElementById("data").innerHTML = `
+			showData(data, type);
+		})
+		.catch((error) => {
+			console.error("Error:", error);
+		});
+}
+
+function showData(data, type) {
+	if (!data || data.length === 0) {
+		document.getElementById("data").innerHTML = `
 				<div class="card shadow-sm">
                     <div class="d-flex justify-content-center py-4">
                         <h5 class="my-auto">
@@ -38,81 +70,65 @@ function fetchData(type) {
                         </h5>
                     </div>
                 </div>`;
-				return;
+		return;
+	}
+
+	document.getElementById("data").innerHTML = data
+		.map((item) => {
+			// กำหนดสีตามสถานะของคำร้อง
+			let color;
+			switch (item.status) {
+				case "แบบร่าง":
+					color = "secondary";
+					break;
+				case "อนุมัติ":
+					color = "success";
+					break;
+				case "ไม่อนุมัติ":
+					color = "danger";
+					break;
+				default:
+					color = "warning";
 			}
 
-			document.getElementById("data").innerHTML = data
-				.map((item) => {
-					// กำหนดสีตามสถานะของคำร้อง
-					let color;
-					switch (item.status) {
-						case "รออนุมัติ":
-							color = "warning";
-							break;
-						case "อนุมัติ":
-							color = "success";
-							break;
-						case "ไม่อนุมัติ":
-							color = "danger";
-							break;
-						default:
-							color = "secondary";
-					}
-
-					// ถ้าเป็นอาจารย์และคำร้องไม่ได้อยู่ในสถานะ "รออนุมัติ" ให้ข้ามไป
-					if (type === "professor" && item.status !== "รออนุมัติ") {
-						return "";
-					}
-
-					// การแสดงรายการคำร้อง
-					return `
+			// การแสดงรายการคำร้อง
+			return `
                         <div class="card shadow-sm p-4 mb-3 position-relative">
-                            <div class="d-flex justify-content-between">
+                            <div class="d-flex justify-content-between flex-xl-row flex-column gap-4">
                                 <div class="d-flex gap-2">
-                                    <div class="rounded h-100 bg-${color}" style="width: 6px;"></div>
+                                    <div class="rounded h-1 bg-${color}" style="width: 6px;"></div>
                                     <h4 class="mt-1">${item.subject}</h4>
                                 </div>
-                                <h5 class="my-auto text-${color} position-absolute start-50 top-50 translate-middle">
+                                <h5 class="my-auto text-${color} position-absolute start-50 top-50 translate-middle d-xl-block d-none">
                                     ${item.status}
                                 </h5>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex gap-2 justify-content-end">
                                     ${
-																			item.status === "แบบร่าง" &&
-																			type === "student"
+																			item.status === "แบบร่าง"
 																				? `
-                                        <button class="btn btn-danger" onclick="deleteRequest(${item.id})">
+                                        <button class="btn btn-danger" onclick="deleteRequest('${item.id}')">
                                             ลบ
                                         </button>
-                                        <button class="btn btn-primary" onclick="updateRequest(${item.id})">
+                                        <button class="btn btn-primary" onclick="updateRequest('${item.id}')">
                                             แก้ไข
                                         </button>
                                     `
 																				: ""
 																		}
                                     ${
-																			item.status === "รออนุมัติ" &&
+																			item.status.includes("รออนุมัติ") &&
 																			type === "student"
 																				? `
-                                        <button class="btn btn-warning" onclick="updateStatus(${item.id}, 'แบบร่าง')">
+                                        <button class="btn btn-warning" onclick="cancelRequest(event, '${item.id}')">
                                             ยกเลิก
                                         </button>
                                     `
 																				: ""
 																		}
                                     ${
-																			item.status === "ไม่อนุมัติ" ||
-																			item.status === "อนุมัติ"
+																			item.status.includes("อนุมัติ")
 																				? `
-                                        <button class="btn btn-primary" onclick="detailBtn(${item.id}, 'student')">
-                                            ดูรายละเอียด
-                                        </button>
-                                    `
-																				: ""
-																		}
-                                    ${
-																			type === "professor"
-																				? `
-                                        <button class="btn btn-primary" onclick="detailBtn(${item.id}, 'professor')">
+                                        <button class="btn btn-primary" onclick="detailBtn('${item.id}', '${type}')">
                                             ดูรายละเอียด
                                         </button>
                                     `
@@ -122,12 +138,8 @@ function fetchData(type) {
                             </div>
                         </div>
                     `;
-				})
-				.join("");
 		})
-		.catch((error) => {
-			console.error("Error:", error);
-		});
+		.join("");
 }
 
 async function showModal(id, type) {
@@ -137,15 +149,13 @@ async function showModal(id, type) {
 	if (id === "create") {
 		// กรณีสร้างคำร้องใหม่
 		const user = await fetchUser();
+		document.getElementById("requestStatus").innerHTML = "";
 		document.getElementById("subject").value = "";
 		document.getElementById("recipient").value =
 			"คณบดีคณะวิทยาศาสตร์และเทคโนโลยี";
-		document.getElementById("firstName").value =
-			user.displayname_th.split(" ")[0];
-		document.getElementById("lastName").value =
-			user.displayname_th.split(" ")[1];
+		document.getElementById("name").value = user.displayname_th;
 		document.getElementById("studentId").value = user.username;
-		document.getElementById("major").value = "";
+		document.getElementById("major").value = user.department;
 		document.getElementById("addressNumber").value = "";
 		document.getElementById("subDistrict").value = "";
 		document.getElementById("district").value = "";
@@ -154,31 +164,18 @@ async function showModal(id, type) {
 		document.getElementById("parentPhone").value = "";
 		document.getElementById("advisor").value = "";
 		document.getElementById("requestType").value = "";
-		document.getElementById("commentBox").innerHTML = ``;
+		document.getElementById("commentBox").innerHTML = "";
+		document.getElementById("document").value = "";
+		document.getElementById("document-info").innerHTML = "";
 		requestTypeChange("");
 		disabledInput(false, "");
 	}
 
-	if (type === "professor") {
-		// กรณีที่เป็นอาจารย์ดูคำร้อง
-		document.getElementById("commentBox").innerHTML = `
-            <div class="modal-header"></div>
-            <div class="modal-header">
-                <h5>ความเห็นอาจารย์ที่ปรึกษา <span class="text-danger">*</span></h5>
-            </div>
-            <div class="modal-body">
-                <textarea class="w-100" id="comment" required></textarea>
-            </div>
-        `;
-		document.getElementById("formButton").innerHTML = `
-            <button onclick="submitForm(event, 'ไม่อนุมัติ', '${id}', '${type}')" class="btn btn-danger">ไม่อนุมัติ</button>
-            <button onclick="submitForm(event, 'อนุมัติ', '${id}', '${type}')" class="btn btn-success">อนุมัติ</button>
-        `;
-	} else if (type === "student") {
+	if (type === "student") {
 		// กรณีนักศึกษาดูคำร้อง
 		document.getElementById("formButton").innerHTML = `
             <button onclick="submitForm(event, 'แบบร่าง', '${id}', '${type}')" class="btn btn-secondary">บันทึก</button>
-            <button onclick="submitForm(event, 'รออนุมัติ', '${id}', '${type}')" class="btn btn-primary">ส่งคำร้อง</button>
+            <button onclick="submitForm(event, 'รออนุมัติจากเจ้าหน้าที่', '${id}', '${type}')" class="btn btn-primary">ส่งคำร้อง</button>
         `;
 	}
 }
@@ -189,54 +186,58 @@ function requestTypeChange(value) {
 		form.innerHTML = ``;
 	} else if (value !== "resign") {
 		form.innerHTML = `
-            <div class="row">
-                <div class="form-group col-md-6">
+            <div class="row px-0 mx-0">
+					<div class="form-group col-md-6">
                     <label for="semester">ภาคการศึกษาที่</label>
-                    <input type="text" class="form-control" id="semester" required>
+                    <input type="text" class="form-control" id="semester" onblur="checkValue(this)" required>
                 </div>
                 <div class="form-group col-md-6">
                     <label for="academicYear">ปีการศึกษา</label>
-                    <input type="text" class="form-control" id="academicYear" required>
+                    <input type="text" class="form-control" id="academicYear" onblur="checkValue(this)" required>
                 </div>
             </div>
-            <div class="row">
+            <div class="row px-0 mx-0">
                 <div class="form-group col-md-4">
                     <label for="courseCode">รหัสวิชา</label>
-                    <input type="text" class="form-control" id="courseCode" required>
+                    <input type="text" class="form-control" id="courseCode" onblur="checkValue(this)" required>
                 </div>
                 <div class="form-group col-md-4">
                     <label for="courseName">ชื่อวิชา</label>
-                    <input type="text" class="form-control" id="courseName" required>
+                    <input type="text" class="form-control" id="courseName" onblur="checkValue(this)" required>
                 </div>
                 <div class="form-group col-md-4">
                     <label for="section">Section</label>
-                    <input type="text" class="form-control" id="section" required>
+                    <input type="text" class="form-control" id="section" onblur="checkValue(this)" required>
                 </div>
             </div>
         `;
 	} else {
 		form.innerHTML = `
-            <div class="row">
+            <div class="row px-0 mx-0">
                 <div class="form-group col-md-6">
                     <label for="startSemester">ตั้งแต่ภาคการศึกษาที่</label>
-                    <input type="text" class="form-control" id="startSemester" required>
+                    <input type="text" class="form-control" id="startSemester" onblur="checkValue(this)" required>
                 </div>
                 <div class="form-group col-md-6">
                     <label for="startAcademicYear">ปีการศึกษา</label>
-                    <input type="text" class="form-control" id="startAcademicYear" required>
+                    <input type="text" class="form-control" id="startAcademicYear" onblur="checkValue(this)" required>
                 </div>
             </div>
-            <div class="row">
+            <div class="row px-0 mx-0">
                 <label>ข้าพเจ้ารับรองว่าไม่มีภาระหนี้ผูกพันกับมหาวิทยาลัย</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="debtStatus" id="noDebt" value="noDebt" onchange="toggleDebtAmount(false)" required>
-                    <label class="form-check-label" for="noDebt">ไม่มีภาระหนี้สินคงค้าง</label>
-                </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="debtStatus" id="hasDebt" value="hasDebt" onchange="toggleDebtAmount(true)" required>
-                    <label class="form-check-label" for="hasDebt">มีภาระหนี้สินคงค้าง</label>
-                    <input type="text" class="form-control mt-2" id="debtAmount" placeholder="ระบุจำนวน" value="0" required disabled>
-                </div>
+				<div class="form-group">
+					<div class="form-check ms-2">
+						<input class="form-check-input" type="radio" name="debtStatus" id="noDebt" value="noDebt" onchange="toggleDebtAmount(false)" onblur="checkValue(this)" required>
+						<label class="form-check-label" for="noDebt">ไม่มีภาระหนี้สินคงค้าง</label>
+					</div>
+				</div>
+				<div class="form-group">
+					<div class="form-check ms-2">
+						<input class="form-check-input" type="radio" name="debtStatus" id="hasDebt" value="hasDebt" onchange="toggleDebtAmount(true)" onblur="checkValue(this)" required>
+						<label class="form-check-label" for="hasDebt">มีภาระหนี้สินคงค้าง</label>
+					</div>
+                	<input type="text" class="form-control mt-2" id="debtAmount" placeholder="ระบุจำนวน" value="0" onblur="checkValue(this)" required disabled>
+				</div>
             </div>
         `;
 	}
@@ -261,8 +262,7 @@ function submitForm(event, status, id, type) {
 		status: status,
 		subject: document.getElementById("subject").value,
 		recipient: document.getElementById("recipient").value,
-		firstName: document.getElementById("firstName").value,
-		lastName: document.getElementById("lastName").value,
+		name: document.getElementById("name").value,
 		studentId: document.getElementById("studentId").value,
 		major: document.getElementById("major").value,
 		addressNumber: document.getElementById("addressNumber").value,
@@ -274,6 +274,17 @@ function submitForm(event, status, id, type) {
 		advisor: document.getElementById("advisor").value,
 		requestType: document.getElementById("requestType").value,
 	};
+
+	if (Object.values(baseRequestData).some((value) => value === "")) {
+		alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+		checkEmptyInputs();
+		return;
+	}
+
+	if (!validateStudentPhoneNumber() || !validateParentPhoneNumber()) {
+		alert("กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง");
+		return;
+	}
 
 	// เก็บข้อมูลเพิ่มเติมตามประเภทคำร้อง
 	const requestData =
@@ -295,13 +306,67 @@ function submitForm(event, status, id, type) {
 					section: document.getElementById("section").value,
 			  };
 
-	if (type === "professor") {
-		requestData.comment = document.getElementById("comment").value;
+	requestData.updatedAt = new Date().toISOString();
+
+	switch (type) {
+		case "student":
+			requestData.waitFor = "กานต์ วัฒนานนท์";
+			break;
+		case "staff":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.waitFor = "สิริกันยา นิลพานิช";
+			break;
+		case "advisor":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.waitFor = "ทรงศักดิ์ รองวิริยะพานิช";
+			break;
+		case "lecturer":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.commentByLecturer =
+				document.getElementById("commentByLecturer").value;
+			requestData.waitFor = "สุเพชร จิรขจรกุล";
+			break;
+		case "dean":
+			requestData.commentByStaff =
+				document.getElementById("commentByStaff").value;
+			requestData.commentByAdvisor =
+				document.getElementById("commentByAdvisor").value;
+			requestData.commentByLecturer =
+				document.getElementById("commentByLecturer").value;
+			requestData.commentByDean =
+				document.getElementById("commentByDean").value;
+			break;
 	}
 
 	if (Object.values(requestData).some((value) => value === "")) {
 		alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+		checkEmptyInputs();
 		return;
+	}
+
+	if (status === "ไม่อนุมัติ") {
+		requestData.waitFor = "";
+	}
+
+	const file = document.getElementById("document").files[0];
+	if (file && !file.type.includes("pdf")) {
+		alert("กรุณาแนบไฟล์ PDF เท่านั้น");
+		return;
+	}
+
+	const formData = new FormData();
+	formData.append("request", JSON.stringify(requestData));
+	if (file) {
+		formData.append("file", file);
+	} else {
+		formData.append("file", null);
 	}
 
 	// ส่งคำร้องไปที่ backend
@@ -309,20 +374,25 @@ function submitForm(event, status, id, type) {
 		`http://localhost:8080/api/requests${id === "create" ? "" : "/" + id}`,
 		{
 			method: id === "create" ? "POST" : "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(requestData),
+			body: formData,
 		}
 	)
 		.then((response) => {
-			if (!response.ok) throw new Error("Failed to submit request");
+			if (!response.ok) {
+				throw new Error(
+					response.status === 413
+						? "ไฟล์มีขนาดใหญ่เกินไป กรุณาอัพโหลดไฟล์ที่มีขนาดไม่เกิน 10MB"
+						: "เกิดข้อผิดพลาดในการส่งคำร้อง"
+				);
+			}
 			return response.json();
 		})
-		.then((data) => {
+		.then(() => {
 			closeModal();
 			fetchData(type);
 		})
 		.catch((error) => {
-			console.error("Error:", error);
+			console.error(error);
 			alert("Error:", error);
 		});
 }
@@ -357,26 +427,51 @@ function deleteRequest(id) {
 	}
 }
 
-function updateStatus(id, status) {
+function cancelRequest(event, id) {
 	if (confirm("ยืนยันการเปลี่ยนสถานะคำร้องนี้?")) {
-		fetch(`http://localhost:8080/api/requests/status/${id}`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: status, // ส่งสถานะใหม่ไปที่ backend
-		})
-			.then(async (response) => {
+		event.preventDefault();
+
+		fetch(`http://localhost:8080/api/requests/${id}`)
+			.then((response) => {
 				if (response.ok) {
-					const user = await fetchUser(); // เรียกข้อมูลผู้ใช้ปัจจุบัน
-					fetchData(user.type); // โหลดข้อมูลใหม่หลังจากเปลี่ยนสถานะ
+					return response.json();
 				} else {
-					throw new Error("Failed to update request status");
+					throw new Error("Failed to fetch request details");
 				}
+			})
+			.then((data) => {
+				const requestData = data;
+
+				requestData.status = "แบบร่าง";
+				requestData.updatedAt = new Date().toISOString();
+				requestData.waitFor = "";
+				requestData.commentByStaff = "";
+				requestData.commentByAdvisor = "";
+				requestData.commentByLecturer = "";
+				requestData.commentByDean = "";
+
+				const formData = new FormData();
+				formData.append("request", JSON.stringify(requestData));
+
+				fetch(`http://localhost:8080/api/requests/${id}`, {
+					method: "PUT",
+					body: formData,
+				})
+					.then((response) => {
+						if (response.ok) {
+							fetchData("student");
+						} else {
+							throw new Error("Failed to cancel request");
+						}
+					})
+					.catch((error) => {
+						console.error("Error:", error);
+						alert("เกิดข้อผิดพลาดในการเปลี่ยนสถานะคำร้อง");
+					});
 			})
 			.catch((error) => {
 				console.error("Error:", error);
-				alert("เกิดข้อผิดพลาดในการเปลี่ยนสถานะคำร้อง");
+				alert("เกิดข้อผิดพลาดในการดึงข้อมูลคำร้อง");
 			});
 	}
 }
@@ -394,8 +489,7 @@ function updateRequest(id) {
 			showModal(data.id, "student"); // เปิด modal เพื่อแก้ไขคำร้อง
 			document.getElementById("subject").value = data.subject;
 			document.getElementById("recipient").value = data.recipient;
-			document.getElementById("firstName").value = data.firstName;
-			document.getElementById("lastName").value = data.lastName;
+			document.getElementById("name").value = data.name;
 			document.getElementById("studentId").value = data.studentId;
 			document.getElementById("major").value = data.major;
 			document.getElementById("addressNumber").value = data.addressNumber;
@@ -426,6 +520,17 @@ function updateRequest(id) {
 				document.getElementById("courseName").value = data.courseName;
 				document.getElementById("section").value = data.section;
 			}
+
+			const documentInfo = document.getElementById("document-info");
+			if (data.fileName !== "uploads/null") {
+				documentInfo.innerHTML = `
+				ไฟล์แนบ: 
+				<a href="http://localhost:8080/api/requests/${data.id}/download" target="_blank" rel="noopener noreferrer">
+				${data.fileName}
+				</a>
+				`;
+			}
+
 			disabledInput(false, data.requestType);
 			document.getElementById("commentBox").innerHTML = ""; // ล้างช่องคอมเมนต์
 		})
@@ -445,17 +550,29 @@ function detailBtn(id, type) {
 			}
 		})
 		.then((data) => {
-			if (type === "professor") {
-				showModal(data.id, "professor"); // เปิด modal สำหรับอาจารย์
-			} else {
-				showModal(data.id, "studentDetail"); // เปิด modal สำหรับนักศึกษา
-			}
+			showModal(data.id, type);
 
-			// กรอกข้อมูลคำร้องในฟอร์ม
+			let color;
+			switch (data.status) {
+				case "แบบร่าง":
+					color = "secondary";
+					break;
+				case "อนุมัติ":
+					color = "success";
+					break;
+				case "ไม่อนุมัติ":
+					color = "danger";
+					break;
+				default:
+					color = "warning";
+			}
+			document.getElementById("requestStatus").classList.add(`text-${color}`);
+
+			document.getElementById("requestStatus").innerHTML =
+				"(" + data.status + ")";
 			document.getElementById("subject").value = data.subject;
 			document.getElementById("recipient").value = data.recipient;
-			document.getElementById("firstName").value = data.firstName;
-			document.getElementById("lastName").value = data.lastName;
+			document.getElementById("name").value = data.name;
 			document.getElementById("studentId").value = data.studentId;
 			document.getElementById("major").value = data.major;
 			document.getElementById("addressNumber").value = data.addressNumber;
@@ -486,21 +603,130 @@ function detailBtn(id, type) {
 				document.getElementById("section").value = data.section;
 			}
 
+			const documentInfo = document.getElementById("document-info");
+			if (data.fileName !== "uploads/null") {
+				documentInfo.innerHTML = `
+					ไฟล์แนบ: 
+					<a href="http://localhost:8080/api/requests/${data.id}/download" target="_blank" rel="noopener noreferrer">
+						${data.fileName}
+					</a>
+				`;
+			}
+
 			disabledInput(true, data.requestType); // ปิดการแก้ไขฟอร์ม
 
-			// กรณีที่เป็นนักศึกษา ให้แสดงคอมเมนต์ของอาจารย์ด้วย
+			let status,
+				comment = "";
+
+			const commentByDean = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นคณบดี <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByDean" ${
+									type !== "dean" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByLecturer = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นอาจารย์ผู้สอน <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByLecturer" ${
+									type !== "lecturer" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByAdvisor = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นอาจารย์ที่ปรึกษา <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByAdvisor" ${
+									type !== "advisor" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			const commentByStaff = `
+							<div class="modal-header py-0"></div>
+							<div class="modal-header">
+								<h5>ความเห็นเจ้าหน้าที่โครงการฯ <span class="text-danger">*</span></h5>
+							</div>
+							<div class="modal-body">
+								<textarea class="w-100" id="commentByStaff" ${
+									type !== "staff" ? "disabled" : ""
+								} required></textarea>
+							</div>
+						`;
+
+			if (type !== "student") {
+				document.getElementById("fileInput").classList.add("d-none");
+
+				if (data.commentByLecturer) {
+					status = "อนุมัติ";
+					comment =
+						commentByStaff +
+						commentByAdvisor +
+						commentByLecturer +
+						commentByDean;
+				} else if (data.commentByAdvisor) {
+					status = "รออนุมัติจากคณบดี";
+					comment = commentByStaff + commentByAdvisor + commentByLecturer;
+				} else if (data.commentByStaff) {
+					status = "รออนุมัติจากอาจารย์ผู้สอน";
+					comment = commentByStaff + commentByAdvisor;
+				} else {
+					status = "รออนุมัติจากอาจารย์ที่ปรึกษา";
+					comment = commentByStaff;
+				}
+			} else {
+				if (data.commentByDean) {
+					comment =
+						commentByStaff +
+						commentByAdvisor +
+						commentByLecturer +
+						commentByDean;
+				} else if (data.commentByLecturer) {
+					comment = commentByStaff + commentByAdvisor + commentByLecturer;
+				} else if (data.commentByAdvisor) {
+					comment = commentByStaff + commentByAdvisor;
+				} else if (data.commentByStaff) {
+					comment = commentByStaff;
+				}
+			}
+
+			document.getElementById("commentBox").innerHTML = comment;
+
+			//กรณีที่เป็นนักศึกษา ให้แสดงคอมเมนต์ของอาจารย์ด้วย
 			if (type === "student") {
-				document.getElementById("commentBox").innerHTML = `
-                    <div class="modal-header"></div>
-                    <div class="modal-header">
-                        <h5>ความเห็นอาจารย์ที่ปรึกษา</h5>
-                    </div>
-                    <div class="modal-body">
-                        <textarea class="w-100" id="comment" disabled></textarea>
-                    </div>
-                `;
-				document.getElementById("comment").value = data.comment;
 				document.getElementById("formButton").innerHTML = "";
+			} else {
+				document.getElementById("formButton").innerHTML = `
+				<button onclick="submitForm(event, 'ไม่อนุมัติ', '${id}', '${type}')" class="btn btn-danger">ไม่อนุมัติ</button>
+				<button onclick="submitForm(event, '${status}', '${id}', '${type}')" class="btn btn-success">อนุมัติ</button>
+				`;
+			}
+
+			if (data.commentByDean) {
+				document.getElementById("commentByDean").value = data.commentByDean;
+			}
+			if (data.commentByLecturer) {
+				document.getElementById("commentByLecturer").value =
+					data.commentByLecturer;
+			}
+			if (data.commentByAdvisor) {
+				document.getElementById("commentByAdvisor").value =
+					data.commentByAdvisor;
+			}
+			if (data.commentByStaff) {
+				document.getElementById("commentByStaff").value = data.commentByStaff;
 			}
 		})
 		.catch((error) => {
@@ -524,10 +750,6 @@ function logout() {
 function disabledInput(value, type) {
 	document.getElementById("subject").disabled = value;
 	document.getElementById("recipient").disabled = value;
-	document.getElementById("firstName").disabled = value;
-	document.getElementById("lastName").disabled = value;
-	document.getElementById("studentId").disabled = value;
-	document.getElementById("major").disabled = value;
 	document.getElementById("addressNumber").disabled = value;
 	document.getElementById("subDistrict").disabled = value;
 	document.getElementById("district").disabled = value;
@@ -536,6 +758,7 @@ function disabledInput(value, type) {
 	document.getElementById("parentPhone").disabled = value;
 	document.getElementById("advisor").disabled = value;
 	document.getElementById("requestType").disabled = value;
+	document.getElementById("document").disabled = value;
 
 	if (type === "") return;
 
@@ -551,5 +774,57 @@ function disabledInput(value, type) {
 		document.getElementById("courseCode").disabled = value;
 		document.getElementById("courseName").disabled = value;
 		document.getElementById("section").disabled = value;
+	}
+}
+
+function validateStudentPhoneNumber() {
+	const phoneRegex = /^\d{10}$/;
+	const studentPhone = document.getElementById("studentPhone");
+
+	if (!phoneRegex.test(studentPhone.value)) {
+		studentPhone.classList.add("is-invalid");
+		return false;
+	}
+
+	studentPhone.classList.remove("is-invalid");
+	return true;
+}
+
+function validateParentPhoneNumber() {
+	const phoneRegex = /^\d{10}$/;
+	const parentPhone = document.getElementById("parentPhone");
+
+	if (!phoneRegex.test(parentPhone.value)) {
+		parentPhone.classList.add("is-invalid");
+		return false;
+	}
+
+	parentPhone.classList.remove("is-invalid");
+	return true;
+}
+
+function checkEmptyInputs() {
+	const inputs = document.querySelectorAll("input, textarea");
+	let isValid = true;
+	validateStudentPhoneNumber();
+	validateParentPhoneNumber();
+
+	inputs.forEach((input) => {
+		if (input.value.trim() === "") {
+			input.classList.add("is-invalid");
+			isValid = false;
+		} else {
+			input.classList.remove("is-invalid");
+		}
+	});
+
+	return isValid;
+}
+
+function checkValue(element) {
+	if (element.value.trim() === "") {
+		element.classList.add("is-invalid");
+	} else {
+		element.classList.remove("is-invalid");
 	}
 }

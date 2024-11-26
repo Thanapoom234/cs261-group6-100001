@@ -18,8 +18,8 @@ public class Request {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(name = "status", nullable = false)
-	private String status;
+	@Column(name = "updated_at", nullable = false)
+	private String updatedAt;
 
 	@Column(name = "subject", nullable = false)
 	private String subject;
@@ -27,11 +27,8 @@ public class Request {
 	@Column(name = "recipient", nullable = false)
 	private String recipient;
 
-	@Column(name = "first_name", nullable = false)
-	private String firstName;
-
-	@Column(name = "last_name", nullable = false)
-	private String lastName;
+	@Column(name = "name", nullable = false)
+	private String name;
 
 	@Column(name = "student_id", nullable = false)
 	private String studentId;
@@ -90,6 +87,30 @@ public class Request {
 	@Column(name = "debt_amount")
 	private String debtAmount;
 
-	@Column(name = "comment")
-	private String comment;
+	@Column(name = "status", nullable = false)
+	private String status;
+
+	@Column(name = "wait_for")
+	private String waitFor;
+
+	@Column(name = "comment_by_staff")
+	private String commentByStaff;
+
+	@Column(name = "comment_by_advisor")
+	private String commentByAdvisor;
+
+	@Column(name = "comment_by_lecturer")
+	private String commentByLecturer;
+
+	@Column(name = "comment_by_dean")
+	private String commentByDean;
+
+	@Column(name = "file_name")
+	private String fileName;
+
+	@Column(name = "file_type")
+    private String fileType;
+
+	@Column(name = "file_path")
+    private String filePath;
 }

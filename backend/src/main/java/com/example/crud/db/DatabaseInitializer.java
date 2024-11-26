@@ -15,17 +15,20 @@ public class DatabaseInitializer {
     @EventListener(ContextRefreshedEvent.class)
     public void onApplicationEvent() {
         String[] alterStatements = {
+                "DELETE FROM requests",
                 "ALTER TABLE requests ALTER COLUMN academic_year NVARCHAR(50);",
                 "ALTER TABLE requests ALTER COLUMN address_number NVARCHAR(50);",
                 "ALTER TABLE requests ALTER COLUMN advisor NVARCHAR(100);",
-                "ALTER TABLE requests ALTER COLUMN comment NVARCHAR(255);",
+                "ALTER TABLE requests ALTER COLUMN comment_by_advisor NVARCHAR(255);",
+                "ALTER TABLE requests ALTER COLUMN comment_by_dean NVARCHAR(255);",
+                "ALTER TABLE requests ALTER COLUMN comment_by_lecturer NVARCHAR(255);",
+                "ALTER TABLE requests ALTER COLUMN comment_by_staff NVARCHAR(255);",
                 "ALTER TABLE requests ALTER COLUMN course_code NVARCHAR(20);",
                 "ALTER TABLE requests ALTER COLUMN course_name NVARCHAR(255);",
                 "ALTER TABLE requests ALTER COLUMN debt_amount NVARCHAR(50);",
                 "ALTER TABLE requests ALTER COLUMN debt_status NVARCHAR(50);",
                 "ALTER TABLE requests ALTER COLUMN district NVARCHAR(100);",
-                "ALTER TABLE requests ALTER COLUMN first_name NVARCHAR(50);",
-                "ALTER TABLE requests ALTER COLUMN last_name NVARCHAR(50);",
+                "ALTER TABLE requests ALTER COLUMN name NVARCHAR(100);",
                 "ALTER TABLE requests ALTER COLUMN major NVARCHAR(100);",
                 "ALTER TABLE requests ALTER COLUMN parent_phone NVARCHAR(20);",
                 "ALTER TABLE requests ALTER COLUMN province NVARCHAR(100);",
@@ -39,7 +42,11 @@ public class DatabaseInitializer {
                 "ALTER TABLE requests ALTER COLUMN student_id NVARCHAR(20);",
                 "ALTER TABLE requests ALTER COLUMN student_phone NVARCHAR(20);",
                 "ALTER TABLE requests ALTER COLUMN sub_district NVARCHAR(100);",
-                "ALTER TABLE requests ALTER COLUMN subject NVARCHAR(255);"
+                "ALTER TABLE requests ALTER COLUMN subject NVARCHAR(255);",
+                "ALTER TABLE requests ALTER COLUMN wait_for NVARCHAR(100);",
+                 "ALTER TABLE requests ALTER COLUMN file_name NVARCHAR(100);",
+                 "ALTER TABLE requests ALTER COLUMN file_type NVARCHAR(100);",
+                 "ALTER TABLE requests ALTER COLUMN file_path NVARCHAR(100);"
         };
 
         for (String sql : alterStatements) {

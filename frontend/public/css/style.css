@@ -1,7 +1,7 @@
 body {
-    font-family: "Sarabun", sans-serif;
-    font-weight: 400;
-    font-style: normal;
+	font-family: "Sarabun", sans-serif;
+	font-weight: 400;
+	font-style: normal;
 }
 
 h1,
@@ -14,7 +14,7 @@ h6 {
 }
 
 .bar {
-    background-color: #bdbdbd;
+	background-color: #bdbdbd;
 	width: 1px;
 	height: 70%;
 	margin: auto 4px;

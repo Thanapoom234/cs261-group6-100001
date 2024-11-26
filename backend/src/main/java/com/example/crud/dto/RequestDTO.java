@@ -5,11 +5,10 @@ import lombok.Data;
 @Data
 public class RequestDTO {
     private Long id;
-    private String status;
+    private String updatedAt;
     private String subject;
     private String recipient;
-    private String firstName;
-    private String lastName;
+    private String name;
     private String studentId;
     private String major;
     private String addressNumber;
@@ -29,5 +28,13 @@ public class RequestDTO {
     private String startAcademicYear;
     private String debtStatus;
     private String debtAmount;
-    private String comment;
+    private String status;
+    private String waitFor;
+    private String commentByStaff;
+    private String commentByAdvisor;
+    private String commentByLecturer;
+    private String commentByDean;
+    private String fileName;
+    private String fileType;
+    private String filePath;
 }
