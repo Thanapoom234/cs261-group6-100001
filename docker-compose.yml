@@ -1,0 +1,70 @@
+services:
+  mssql:
+    build:
+      context: .
+      dockerfile: mssql.dockerfile
+    container_name: mssql
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+    networks:
+      - mynetwork
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "/opt/mssql-tools/bin/sqlcmd",
+          "-S",
+          "localhost",
+          "-U",
+          "sa",
+          "-P",
+          "YourStrong@Passw0rd",
+          "-Q",
+          "SELECT 1",
+        ]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mssql
+    networks:
+      - mynetwork
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: backend.dockerfile
+    container_name: backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:sqlserver://mssql:1433;databaseName=myDB;encrypt=true;trustServerCertificate=true
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=YourStrong@Passw0rd
+    depends_on:
+      mssql:
+        condition: service_healthy
+    networks:
+      - mynetwork
+    command: >
+      /bin/bash -c "
+      echo 'Waiting for SQL Server to initialize...';
+      until /opt/mssql-tools/bin/sqlcmd -S mssql -U sa -P 'YourStrong@Passw0rd' -d myDB -Q 'SELECT 1'; do
+        echo 'Waiting for SQL Server to be ready...';
+        sleep 10;
+      done;"
+
+networks:
+  mynetwork:
+    driver: bridge
